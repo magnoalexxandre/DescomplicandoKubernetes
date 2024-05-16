@@ -1,1009 +1,622 @@
-# O quê preciso saber antes de começar?
+Descomplicando o Kubernetes - Expert Mode
+ 
 
-## Qual distro Linux devo usar?
+DAY-1
+ 
 
-Devido ao fato de algumas importantes ferramentas como o systemd e o journald terem se tornado padrão, com a maioria das principais distribuições hoje disponíveis você conseguirá seguir treinamento. 
+O quê preciso saber antes de começar?
+Durante o Day-1 nós vamos entender o que é um container, vamos falar sobre a importância do container runtime e do container engine. Durante o Day-1 vamos entender o que é o Kubernetes e sua arquitetura, vamos falar sobre o control plane, workers, apiserver, scheduler, controller e muito mais! Será aqui que iremos criar o nosso primeiro cluster Kubernetes e realizar o deploy de um pod do Nginx. O Day-1 é para que eu possa me sentir mais confortável com o Kubernetes e seus conceitos iniciais.  
 
-## Alguns sites que devemos visitar:
 
-- [https://kubernetes.io](https://kubernetes.io)
 
-- [https://github.com/kubernetes/kubernetes/](https://github.com/kubernetes/kubernetes/)
+Inicio da aula do Day-1
+Qual distro GNU/Linux devo usar?
+Devido ao fato de algumas ferramentas importantes, como o systemd e journald, terem se tornado padrão na maioria das principais distribuições disponíveis hoje, você não deve encontrar problemas para seguir o treinamento, caso você opte por uma delas, como Ubuntu, Debian, CentOS e afins.  
 
-- [https://github.com/kubernetes/kubernetes/issues](https://github.com/kubernetes/kubernetes/issues)
+Alguns sites que devemos visitar
+Abaixo temos os sites oficiais do projeto do Kubernetes:
 
-- [https://www.cncf.io/certification/cka/](https://www.cncf.io/certification/cka/)
+https://kubernetes.io
 
-- [https://www.cncf.io/certification/ckad/](https://www.cncf.io/certification/ckad/)
+https://github.com/kubernetes/kubernetes/
 
-- [https://12factor.net/pt_br/](https://12factor.net/pt_br/)
+https://github.com/kubernetes/kubernetes/issues
 
-## E o k8s?
+  Abaixo temos as páginas oficiais das certificações do Kubernetes (CKA, CKAD e CKS):
 
-O projeto Kubernetes surgiu dentro da Google como seu orquestrador de containers, com seu design e desenvolvimento baseados no Borg e anunciado inicialmente em meados de 2014, já como um projeto *opensource*. O termo "kubernetes" em Grego significa "timoneiro", sendo que outros produtos também originaram-se do Bord, como o Apache Mesos e o Cloud Foundry.
+https://www.cncf.io/certification/cka/
 
-Como Kubernetes é uma palavra difícil de se pronunciar - e de se escrever - a comunidade simplesmente o apelidou de **k8s** (a letra "k" seguida por oito letras e o "s" no final), pronunciando-se simplesmente "kates".
+https://www.cncf.io/certification/ckad/
 
-## Arquitetura do k8s
+https://www.cncf.io/certification/cks/
 
-Assim como os demais orquestradores disponíveis, o k8s também segue um modelo *master/slave*, constituindo assim um *cluster*, onde para seu funcionamento devem existir no mínimo três nós: o nó master, responsável por padrão apenas pelo gerenciamento do *cluster*, e os demais como *workers*, executores das aplicações que nós queremos executar sobre esse cluster.
+ 
 
-Embora exista a exigência de no mínimo três nós para a execução do k8s em um ambiente padrão, existem distribuições do k8s para um único nó. Exemplos são:
+O Container Engine
+Antes de começar a falar um pouco mais sobre o Kubernetes, nós primeiro precisamos entender alguns componentes que são importantes no ecossistema do Kubernetes, um desses componentes é o Container Engine.
 
-- [Minikube](https://github.com/kubernetes/minikube): Muito utilizado para implementar um cluster Kubernetes localmente para fins de desenvolvimento, testes e didáticos e que não deve ser utilizado para produção;
+O Container Engine é o responsável por gerenciar as imagens e volumes, é ele o responsável por garantir que os os recursos que os containers estão utilizando está devidamente isolados, a vida do container, storage, rede, etc.
 
-- [MicroK8s](https://microk8s.io): Desenvolvido pela Canonical, mesma empresa que desenvolve o Ubuntu, pode ser utilizada em diversas distribuições e tem como público algo desenvolvedores e profissionais de DevOps, podendo ser utilizada para ambientes de produção, em especial para *Edge Computing* e IoT;
+Hoje temos diversas opções para se utilizar como Container Engine, que até pouco tempo atrás tinhamos somente o Docker para esse papel.
 
-- [k3s](https://k3s.io): Desenvolvido pela Rancher Labs, é um concorrente direto do MicroK8s, podendo ser executado inclusive em Raspberry Pi.
+Opções como o Docker, o CRI-O e o Podman são bem conhecidas e preparadas para o ambiente produtivo. O Docker, como todos sabem, é o Container Engine mais popular e ele utiliza como Container Runtime o containerd.
 
-Abaixo um diagrama que mostra a arquitetura do k8s:
+Container Runtime? O que é isso?
 
-| ![Arquitetura Kubernetes](https://upload.wikimedia.org/wikipedia/commons/b/be/Kubernetes.png)|
-|:--:| 
-| *Arquitetura Kubernetes* |
+Calma que vou te explicar já já, mas antes temos que falar sobre a OCI. :)
 
-##
-- **API Server**: É um dos principais componentes do k8s. Ele quem fornece uma API que utiliza JSON sobre HTTP para comunicação principalmente utilizando o utilitário ```kubectl``` por parte dos administradores e para a comunicação entre os demais nós, conforme mostrado no gráfico, por meio de requisições REST;
+ 
 
-- **etcd**: O etcd é um *datastore* chave-valor distribuído que o k8s utiliza para armazenar o status e as configurações do *cluster*. Todos os dados armazenados dentro do etcd são manipulados apenas através da API;
+OCI - Open Container Initiative
+A OCI é uma organização sem fins lucrativos que tem como objetivo padronizar a criação de containers, para que possam ser executados em qualquer ambiente. A OCI foi fundada em 2015 pela Docker, CoreOS, Google, IBM, Microsoft, Red Hat e VMware e hoje faz parte da Linux Foundation.
 
-- **Scheduler**: É o *scheduler* quem selecionará em qual nó um determinado pod (a menor unidade de um *cluster* k8s - não se preocupe sobre isso por enquanto, nós falaremos mais sobre isso mais tarde) será executado, baseado na quantidade de recursos disponíveis, além de sabe o estado de cada um dos nós do *cluster*, garantindo que os recursos estejam bem distribuídos, baseando-se também em políticas definidas pelo usuário como por afinidade, localização de dados a serem lidos pelas aplicações, etc;
+O principal projeto criado pela OCI é o runc, que é o principal container runtime de baixo nível, e utilizado por diferentes *Container Engines, como o Docker. O runc é um projeto open source, escrito em Go e seu código está disponível no GitHub.
 
-- **Controller Manager**: É o *controller manager* que garante que o cluster esteja no último estado definido na base de dados presente no etcd. Por exemplo: se no etcd um *deploy* está setado para possuir 10 réplicas em execução, é o *controller manager* quem irá verificar se o estado atual do cluster corresponde, se essas 10 réplicas estão de fato rodando corretamente e, em caso negativo, comunicará-se com a API do k8s para tal;
+Agora sim já podemos falar sobre o que é o Container Runtime.
 
-- **Kubelet**: O *kubelet* pode ser visto como o agente do k8s eecutado nos nós workers. É *ele* o responsável por de fato iniciar, parar, e manter os containers e os *pods* dentro do nós, direcionados pelo *controller* do *cluster*;
+ 
 
-- **Kube-proxy**: Age como um *proxy* e um *load balancer*, efetuando o roteamento para o *pod* correto, cuidando de parte da rede do nó;
+O Container Runtime
+Para que seja possível executar os containers nos nós é necessário ter um Container Runtime instalado em cada um dos nós.
 
-- **Container runtime**: O *container runtime* é o ambiente de execução de containers necessário para o funcionamento do k8s. Em 2016 suporte ao [rkt](https://coreos.com/rkt/) foi adicionado, porém desde o início o Docker já é funcional.
+O Container Runtime é o responsável por executar os containers nos nós. Quando você está utilizando Docker ou Podman para executar containers em sua máquina, por exemplo, você está fazendo uso de algum Container Runtime, ou melhor, o seu Container Engine está fazendo uso de algum Container Runtime.
 
-## Portas que devemos nos preocupar
+Temos três tipos de Container Runtime:
 
-**MASTER**
+Low-level: são os Container Runtime que são executados diretamente pelo Kernel, como o runc, o crun e o runsc.
 
-- API Server: 6443 TCP
+High-level: são os Container Runtime que são executados por um Container Engine, como o containerd, o CRI-O e o Podman.
 
-- etcd: 2379-2380 TCP
+Sandbox: são os Container Runtime que são executados por um Container Engine e que são responsáveis por executar containers de forma segura em unikernels ou utilizando algum proxy para fazer a comunicação com o Kernel. O gVisor é um exemplo de Container Runtime do tipo Sandbox.
 
-- Kubelet: 10250 TCP, 10255 TCP
+Virtualized: são os Container Runtime que são executados por um Container Engine e que são responsáveis por executar containers de forma segura em máquinas virtuais. A performance aqui é um pouco menor do que quando temos um sendo executado nativamente. O Kata Containers é um exemplo de Container Runtime do tipo Virtualized.
 
-- Scheduler: 10251 TCP
+ 
 
-- Controller Manager: 10252 TCP
+O que é o Kubernetes?
+Versão resumida:
 
-- NodePort Services: 30000-32767 TCP
+O projeto Kubernetes foi desenvolvido pela Google, em meados de 2014, para atuar como um orquestrador de contêineres para a empresa. O Kubernetes (k8s), cujo termo em Grego significa "timoneiro", é um projeto open source que conta com design e desenvolvimento baseados no projeto Borg, que também é da Google 1. Alguns outros produtos disponíveis no mercado, tais como o Apache Mesos e o Cloud Foundry, também surgiram a partir do projeto Borg.
 
-**WORKERS**
+Como Kubernetes é uma palavra difícil de se pronunciar - e de se escrever - a comunidade simplesmente o apelidou de k8s, seguindo o padrão i18n (a letra "k" seguida por oito letras e o "s" no final), pronunciando-se simplesmente "kates".
 
-- Kubelet: 10250 TCP, 12255 TCP
+Versão longa:
 
-- NodePort Services: 30000-32767 TCP
+Praticamente todo software desenvolvido na Google é executado em contêiner 2. A Google já gerencia contêineres em larga escala há mais de uma década, quando não se falava tanto sobre isso. Para atender a demanda interna, alguns desenvolvedores do Google construíram três sistemas diferentes de gerenciamento de contêineres: Borg, Omega e Kubernetes. Cada sistema teve o desenvolvimento bastante influenciado pelo antecessor, embora fosse desenvolvido por diferentes razões.
 
-Você você opte pelo [Weave](https://weave.works) como *pod network*, devem ser liberadas também as portas 6783 e 6784 TCP.
+O primeiro sistema de gerenciamento de contêineres desenvolvido no Google foi o Borg, construído para gerenciar serviços de longa duração e jobs em lote, que anteriormente eram tratados por dois sistemas: Babysitter e Global Work Queue. O último influenciou fortemente a arquitetura do Borg, mas estava focado em execução de jobs em lote. O Borg continua sendo o principal sistema de gerenciamento de contêineres dentro do Google por causa de sua escala, variedade de recursos e robustez extrema.
 
-## Tá, mas qual tipo de aplicação eu devo rodar sobre o k8s?
+O segundo sistema foi o Omega, descendente do Borg. Ele foi impulsionado pelo desejo de melhorar a engenharia de software do ecossistema Borg. Esse sistema aplicou muitos dos padrões que tiveram sucesso no Borg, mas foi construído do zero para ter a arquitetura mais consistente. Muitas das inovações do Omega foram posteriormente incorporadas ao Borg.
 
-O melhor *app* para rodar em container, principalmente no k8s, são aplicações que seguem o [The Twelve-Factor App](https://12factor.net/pt_br/).
+O terceiro sistema foi o Kubernetes. Concebido e desenvolvido em um mundo onde desenvolvedores externos estavam se interessando em contêineres e o Google desenvolveu um negócio em amplo crescimento atualmente, que é a venda de infraestrutura de nuvem pública.
 
-## Conceitos-chave do k8s
+O Kubernetes é de código aberto - em contraste com o Borg e o Omega que foram desenvolvidos como sistemas puramente internos do Google. O Kubernetes foi desenvolvido com um foco mais forte na experiência de desenvolvedores que escrevem aplicativos que são executados em um cluster: seu principal objetivo é facilitar a implantação e o gerenciamento de sistemas distribuídos, enquanto se beneficia do melhor uso de recursos de memória e processamento que os contêineres possibilitam.
 
-É importante saber que a forma como o k8s gerencia containers é ligeiramente diferente de outros orquestradores, como o Docker Swarm, sobretudo devido ao fato de que ele não trata os containers diretamente, mas sim através de *pods*. Vamos conhecer alguns dos principais conceitos que envolvem o k8s abaixo:
+Estas informações foram extraídas e adaptadas deste artigo, que descreve as lições aprendidas com o desenvolvimento e operação desses sistemas.  
 
-- **Pod**: O *pod* é o menor objeto do k8s. Como dito anteriormente, o k8s não trabalha com os containers diretamente, mas os organiza dentro de *pods*, que são abstrações que dividem os mesmos recursos, como endereços, ciclos de CPU e memória. Um pod, embora não seja comum, pode possuir vários containers;
+Arquitetura do k8s
+Assim como os demais orquestradores disponíveis, o k8s também segue um modelo control plane/workers, constituindo assim um cluster, onde para seu funcionamento é recomendado no mínimo três nós: o nó control-plane, responsável (por padrão) pelo gerenciamento do cluster, e os demais como workers, executores das aplicações que queremos executar sobre esse cluster.
 
-- **Controller**: Um *controller* é o objeto responsável por interagir com o *API Server* e orquestrar algum outro objeto. Exemplos de objetos desta classe são *Deployments* e *Replication Controllers*;
+É possível criar um cluster Kubernetes rodando em apenas um nó, porém é recomendado somente para fins de estudos e nunca executado em ambiente produtivo.
 
-- **ReplicaSets**: Um *ReplicaSet* é um objeto responsável por garantir a quantidade de pods em execução no nó;
+Caso você queira utilizar o Kubernetes em sua máquina local, em seu desktop, existem diversas soluções que irão criar um cluster Kubernetes, utilizando máquinas virtuais ou o Docker, por exemplo.
 
-- **Deployment**: É um dos principais *controllers* utilizados, o *Deployment* garante que um determinado número de réplicas de um *pod* através de um outro controller chamado *ReplicaSet* esteja em execução nos nós *workers* do *cluster*;
+Com isso você poderá ter um cluster Kubernetes com diversos nós, porém todos eles rodando em sua máquina local, em seu desktop.
 
-- **Jobs e CronJobs**: Responsáveis pelo gerenciamento de tarefas isoladas ou recorrentes.
+Alguns exemplos são:
 
-# Minikube
+Kind: Uma ferramenta para execução de contêineres Docker que simulam o funcionamento de um cluster Kubernetes. É utilizado para fins didáticos, de desenvolvimento e testes. O Kind não deve ser utilizado para produção;
 
-## Requisitos básicos
+Minikube: ferramenta para implementar um cluster Kubernetes localmente com apenas um nó. Muito utilizado para fins didáticos, de desenvolvimento e testes. O Minikube não deve ser utilizado para produção;
 
-É importante frisar que o Minikube deve ser instalado localmente, e não em um *cloud provider*. Por isso, as especificações de hardware abaixo são referentes à máquina local. 
+MicroK8S: Desenvolvido pela Canonical, mesma empresa que desenvolve o Ubuntu. Pode ser utilizado em diversas distribuições e pode ser utilizado em ambientes de produção, em especial para Edge Computing e IoT (Internet of things);
 
-## Instalação do Minikube no Linux
+k3s: Desenvolvido pela Rancher Labs, é um concorrente direto do MicroK8s, podendo ser executado inclusive em Raspberry Pi.
 
-Antes de mais nada, verifique se a sua máquina suporta virtualização. No Linux, isto pode ser realizado com:
+k0s: Desenvolvido pela Mirantis, mesma empresa que adquiriu a parte enterprise do Docker. É uma distribuição do Kubernetes com todos os recursos necessários para funcionar em um único binário, que proporciona uma simplicidade na instalação e manutenção do cluster. A pronúncia é correta é kay-zero-ess e tem por objetivo reduzir o esforço técnico e desgaste na instalação de um cluster Kubernetes, por isso o seu nome faz alusão a Zero Friction. O k0s pode ser utilizado em ambientes de produção/
 
-```
-# grep -E --color 'vmx|svm
-```
+API Server: É um dos principais componentes do k8s. Este componente fornece uma API que utiliza JSON sobre HTTP para comunicação, onde para isto é utilizado principalmente o utilitário kubectl, por parte dos administradores, para a comunicação com os demais nós, como mostrado no gráfico. Estas comunicações entre componentes são estabelecidas através de requisições REST;
 
-Caso a saída do comando não seja vazia, o resultado é positivo.
+etcd: O etcd é um datastore chave-valor distribuído que o k8s utiliza para armazenar as especificações, status e configurações do cluster. Todos os dados armazenados dentro do etcd são manipulados apenas através da API. Por questões de segurança, o etcd é por padrão executado apenas em nós classificados como control plane no cluster k8s, mas também podem ser executados em clusters externos, específicos para o etcd, por exemplo;
 
-Após isso, vamos instalar o kubectl com os comandos:
+Scheduler: O scheduler é responsável por selecionar o nó que irá hospedar um determinado pod (a menor unidade de um cluster k8s - não se preocupe sobre isso por enquanto, nós falaremos mais sobre isso mais tarde) para ser executado. Esta seleção é feita baseando-se na quantidade de recursos disponíveis em cada nó, como também no estado de cada um dos nós do cluster, garantindo assim que os recursos sejam bem distribuídos. Além disso, a seleção dos nós, na qual um ou mais pods serão executados, também pode levar em consideração políticas definidas pelo usuário, tais como afinidade, localização dos dados a serem lidos pelas aplicações, etc;
 
-```
-# curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-# chmod +x ./kubectl
-# sudo mv ./kubectl /usr/local/bin/kubectl
-# kubectl version --client
-```
+Controller Manager: É o controller manager quem garante que o cluster esteja no último estado definido no etcd. Por exemplo: se no etcd um deploy está configurado para possuir dez réplicas de um pod, é o controller manager quem irá verificar se o estado atual do cluster corresponde a este estado e, em caso negativo, procurará conciliar ambos;
 
-Há a possibilidade de não utilizar um *hypervisor* para a instalação do Minikube, executando-o ao invés disso sobre o próprio host. Iremos utilizar o Oracle VirtualBox como *hypervisor*, que pode ser encontrado [aqui](https://www.virtualbox.org).
+Kubelet: O kubelet pode ser visto como o agente do k8s que é executado nos nós workers. Em cada nó worker deverá existir um agente Kubelet em execução. O Kubelet é responsável por de fato gerenciar os pods, que foram direcionados pelo controller do cluster, dentro dos nós, de forma que para isto o Kubelet pode iniciar, parar e manter os contêineres e os pods em funcionamento de acordo com o instruído pelo controlador do cluster;
 
-Efetue o download e a instalação do Minikube utilizando o comando abaixo:
+Kube-proxy: Age como um proxy e um load balancer. Este componente é responsável por efetuar roteamento de requisições para os pods corretos, como também por cuidar da parte de rede do nó;  
 
-```
-# curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube
-```
+Portas que devemos nos preocupar
+CONTROL PLANE
 
-## Instalação do Minikube no macOS
+Protocol	Direction	Port Range	Purpose	Used By
+TCP	Inbound	6443*	Kubernetes API server	All
+TCP	Inbound	2379-2380	etcd server client API	kube-apiserver, etcd
+TCP	Inbound	10250	Kubelet API	Self, Control plane
+TCP	Inbound	10251	kube-scheduler	Self
+TCP	Inbound	10252	kube-controller-manager	Self
+Toda porta marcada por * é customizável, você precisa se certificar que a porta alterada também esteja aberta.   WORKERS
+Protocol	Direction	Port Range	Purpose	Used By
+TCP	Inbound	10250	Kubelet API	Self, Control plane
+TCP	Inbound	30000-32767	NodePort	Services All
+ 
 
-No macOS, o comando para verificar se o processador suporte virtualização é:
+Conceitos-chave do k8s
+É importante saber que a forma como o k8s gerencia os contêineres é ligeiramente diferente de outros orquestradores, como o Docker Swarm, sobretudo devido ao fato de que ele não trata os contêineres diretamente, mas sim através de pods. Vamos conhecer alguns dos principais conceitos que envolvem o k8s a seguir:
 
-```
-# sysctl -a | grep -E --color 'machdep.cpu.features|VMX'
-```
+Pod: É o menor objeto do k8s. Como dito anteriormente, o k8s não trabalha com os contêineres diretamente, mas organiza-os dentro de pods, que são abstrações que dividem os mesmos recursos, como endereços, volumes, ciclos de CPU e memória. Um pod pode possuir vários contêineres;
 
-Se você visualizar `VMX` na saída, o resultado é positivo.
+Deployment: É um dos principais controllers utilizados. O Deployment, em conjunto com o ReplicaSet, garante que determinado número de réplicas de um pod esteja em execução nos nós workers do cluster. Além disso, o Deployment também é responsável por gerenciar o ciclo de vida das aplicações, onde características associadas a aplicação, tais como imagem, porta, volumes e variáveis de ambiente, podem ser especificados em arquivos do tipo yaml ou json para posteriormente serem passados como parâmetro para o kubectl executar o deployment. Esta ação pode ser executada tanto para criação quanto para atualização e remoção do deployment;
 
-O kubectl pode ser instalado no macOS utilizando tanto o [Homebrew](https://brew.sh), quanto o método tradicional. Com o Homebrew já instalado, o kubectl pode ser instalado da seguinte forma:
+ReplicaSets: É um objeto responsável por garantir a quantidade de pods em execução no nó;
 
-```
-# brew install kubectl
-```
+Services: É uma forma de você expor a comunicação através de um ClusterIP, NodePort ou LoadBalancer para distribuir as requisições entre os diversos Pods daquele Deployment. Funciona como um balanceador de carga.
 
-Ou:
+Instalando e customizando o Kubectl
+Instalação do Kubectl no GNU/Linux
+Vamos instalar o kubectl com os seguintes comandos.
 
-```
-# brew install kubectl-cli
-```
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
 
-Já com o método tradicional, a instalação pode ser realizada com os seguintes comandos:
+chmod +x ./kubectl
 
-```
-# curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/darwin/amd64/kubectl"
-# chmod +x ./kubectl
-# sudo mv ./kubectl /usr/local/bin/kubectl
-# kubectl version --client
-```
+sudo mv ./kubectl /usr/local/bin/kubectl
 
-Por fim, efetua-se a instalação do Minikube com um dos dois métodos abaixo, também podendo optar-se pelo Homebrew ou pelo método tradicional:
+kubectl version --client
+ 
 
-```
-# brew install minikube
-```
+Instalação do Kubectl no MacOS
+O kubectl pode ser instalado no MacOS utilizando tanto o Homebrew, quanto o método tradicional. Com o Homebrew já instalado, o kubectl pode ser instalado da seguinte forma.
 
-Ou:
+sudo brew install kubectl
 
-```
-# curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64 && chmod +x minikube
-# sudo mv minikube /usr/local/bin
-```
+kubectl version --client
+  Ou:
 
-## Instalação do Minikube no Microsoft Windows
+sudo brew install kubectl-cli
 
-No Microsoft Windows, você deve executar o comando `systeminfo` no prompt de comando ou no terminal. Caso você visualize a similar com a abaixo é sinal que virtualização é suportada:
+kubectl version --client
+  Já com o método tradicional, a instalação pode ser realizada com os seguintes comandos.
 
-```textile
+curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/darwin/amd64/kubectl"
+
+chmod +x ./kubectl
+
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+kubectl version --client
+ 
+
+Instalação do Kubectl no Windows
+A instalação do kubectl pode ser realizada efetuando o download neste link.
+
+Outras informações sobre como instalar o kubectl no Windows podem ser encontradas nesta página.
+
+Customizando o kubectl
+Auto-complete
+Execute o seguinte comando para configurar o alias e autocomplete para o kubectl.
+
+No Bash:
+
+source <(kubectl completion bash) # configura o autocomplete na sua sessão atual (antes, certifique-se de ter instalado o pacote bash-completion).
+
+echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanentemente ao seu shell.
+  No ZSH:
+
+source <(kubectl completion zsh)
+
+echo "[[ $commands[kubectl] ]] && source <(kubectl completion zsh)"
+ 
+
+Criando um alias para o kubectl
+Crie o alias k para kubectl:
+
+alias k=kubectl
+
+complete -F __start_kubectl k
+ 
+
+Criando um cluster Kubernetes
+Criando o cluster em sua máquina local
+Vamos mostrar algumas opções, caso você queira começar a brincar com o Kubernetes utilizando somente a sua máquina local, o seu desktop.
+
+Lembre-se, você não é obrigado a testar/utilizar todas as opções abaixo, mas seria muito bom caso você testasse. :D
+
+Minikube
+Requisitos básicos
+É importante frisar que o Minikube deve ser instalado localmente, e não em um cloud provider. Por isso, as especificações de hardware a seguir são referentes à máquina local.
+
+Processamento: 1 core;
+Memória: 2 GB;
+HD: 20 GB.
+Instalação do Minikube no GNU/Linux
+Antes de mais nada, verifique se a sua máquina suporta virtualização. No GNU/Linux, isto pode ser realizado com o seguinte comando:
+
+grep -E --color 'vmx|svm' /proc/cpuinfo
+  Caso a saída do comando não seja vazia, o resultado é positivo.
+
+Há a possibilidade de não utilizar um hypervisor para a instalação do Minikube, executando-o ao invés disso sobre o próprio host. Iremos utilizar o Oracle VirtualBox como hypervisor, que pode ser encontrado aqui.
+
+Efetue o download e a instalação do Minikube utilizando os seguintes comandos.
+
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+chmod +x ./minikube
+
+sudo mv ./minikube /usr/local/bin/minikube
+
+minikube version
+ 
+
+Instalação do Minikube no MacOS
+No MacOS, o comando para verificar se o processador suporta virtualização é:
+
+sysctl -a | grep -E --color 'machdep.cpu.features|VMX'
+  Se você visualizar VMX na saída, o resultado é positivo.
+
+Efetue a instalação do Minikube com um dos dois métodos a seguir, podendo optar-se pelo Homebrew ou pelo método tradicional.
+
+sudo brew install minikube
+
+minikube version
+  Ou:
+
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
+
+chmod +x ./minikube
+
+sudo mv ./minikube /usr/local/bin/minikube
+
+minikube version
+ 
+
+Instalação do Minikube no Microsoft Windows
+No Microsoft Windows, você deve executar o comando systeminfo no prompt de comando ou no terminal. Caso o retorno deste comando seja semelhante com o descrito a seguir, então a virtualização é suportada.
+
 Hyper-V Requirements:     VM Monitor Mode Extensions: Yes
                           Virtualization Enabled In Firmware: Yes
                           Second Level Address Translation: Yes
                           Data Execution Prevention Available: Yes
-```
+  Caso a linha a seguir também esteja presente, não é necessária a instalação de um hypervisor como o Oracle VirtualBox:
 
-Usuários de Microsoft Windows: caso a linha abaixo também esteja presente, não é necessária a instalação de um *hypervisor* como o Oracle VirtualBox:
+Hyper-V Requirements:     A hypervisor has been detected. Features required for Hyper-V will not be displayed.:     A hypervisor has been detected. Features required for Hyper-V will not be displayed.
+  Faça o download e a instalação de um hypervisor (preferencialmente o Oracle VirtualBox), caso no passo anterior não tenha sido acusada a presença de um. Finalmente, efetue o download do instalador do Minikube aqui e execute-o.
 
-```textile
-Hyper-V Hyper-V Requirements:     A hypervisor has been detected. Features required for Hyper-V will not be displayed.:     A hypervisor has been detected. Features required for Hyper-V will not be displayed.
-```
+Iniciando, parando e excluindo o Minikube
+Quando operando em conjunto com um hypervisor, o Minikube cria uma máquina virtual, onde dentro dela estarão todos os componentes do k8s para execução.
 
-A instalação do kubectl pode ser realizada efetuando o download e [neste](https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/windows/amd64/kubectl.exe) link. Feito isso, também deve ser realizado download e a instalação de um *hypervisor* (preferencialmente o [Oracle VirtualBox](https://www.virtualbox.org)) caso no passo anterior não tenha sido acusada a presença de um. Efetue então o download do instalador do Minikube e execute-o [aqui]([Release v1.10.0 · kubernetes/minikube · GitHub](https://github.com/kubernetes/minikube/releases/latest)).
+É possível selecionar qual hypervisor iremos utilizar por padrão, através no comando abaixo:
 
-## Iniciando, parando e excluindo o Minikube
+minikube config set driver <SEU_HYPERVISOR> 
+  Você deve substituir <SEU_HYPERVISOR> pelo seu hypervisor, por exemplo o KVM2, QEMU, Virtualbox ou o Hyperkit.
 
-Quando operando em conjunto com um *hypervisor*, o Minikube cria uma máqunia virtual, onde dentro dela estarão todos os componentes do k8s para execução. Para realizar a inicialização desse ambiente, execute o comando:
+Caso não queria configurar um hypervisor padrão, você pode digitar o comando minikube start --driver=hyperkit toda vez que criar um novo ambiente.
 
-```
-# minikube start
-```
-
-Caso deseje parar o ambiente:
-
-```
-# minikube stop
-```
-
-Para excluir o ambiente:
-
-```
-# minikube delete
-```
-
-## Certo, e como eu sei que está tudo funcionando como deveria?
-
+Certo, e como eu sei que está tudo funcionando como deveria?
 Uma vez iniciado, você deve ter uma saída na tela similar à seguinte:
 
-```
-# minikube start
-🎉  minikube 1.10.0 is available! Download it: https://github.com/kubernetes/minikube/releases/tag/v1.10.0
-💡  To disable this notice, run: 'minikube config set WantUpdateNotification false'
+minikube start
 
-🙄  minikube v1.9.2 on Darwin 10.11
-✨  Using the virtualbox driver based on existing profile
-👍  Starting control plane node m01 in cluster minikube
-🔄  Restarting existing virtualbox VM for "minikube" ...
-🐳  Preparing Kubernetes v1.18.0 on Docker 19.03.8 ...
-🌟  Enabling addons: default-storageclass, storage-provisioner
-🏄  Done! kubectl is now configured to use "minikube"
-```
+😄  minikube v1.26.0 on Debian bookworm/sid
+✨  Using the qemu2 (experimental) driver based on user configuration
+👍  Starting control plane node minikube in cluster minikube
+🔥  Creating qemu2 VM (CPUs=2, Memory=6000MB, Disk=20000MB) ...
+🐳  Preparing Kubernetes v1.24.1 on Docker 20.10.16 ...
+    ▪ Generating certificates and keys ...
+    ▪ Booting up control plane ...
+    ▪ Configuring RBAC rules ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: default-storageclass, storage-provisioner
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
 
-Você pode então listar os nós que fazem parte do seu *cluster* k8s com o seguinte comando:
+Você pode então listar os nós que fazem parte do seu cluster k8s com o seguinte comando:
 
-```
-# kubectl get nodes
-```
+kubectl get nodes
+  A saída será similar ao conteúdo a seguir:
 
-A saída será similar ao conteúdo abaixo:
+kubectl get nodes
+  Para criar um cluster com mais de um nó, você pode utilizar o comando abaixo, apenas modificando os valores para o desejado:
 
-```
-# kubectl get nodes
-NAME       STATUS   ROLES    AGE   VERSION
-minikube   Ready    master   8d    v1.18.0
-```
+minikube start --nodes 2 -p multinode-cluster
 
-Claramente, como a intenção do Minikube é executar o k8s em apenas um nó, é natural que seja apresentado apenas uma linha na saída do comando acima.
+😄  minikube v1.26.0 on Debian bookworm/sid
+✨  Automatically selected the docker driver. Other choices: kvm2, virtualbox, ssh, none, qemu2 (experimental)
+📌  Using Docker driver with root privileges
+👍  Starting control plane node minikube in cluster minikube
+🚜  Pulling base image ...
+💾  Downloading Kubernetes v1.24.1 preload ...
+    > preloaded-images-k8s-v18-v1...: 405.83 MiB / 405.83 MiB  100.00% 66.78 Mi
+    > gcr.io/k8s-minikube/kicbase: 385.99 MiB / 386.00 MiB  100.00% 23.63 MiB p
+    > gcr.io/k8s-minikube/kicbase: 0 B [_________________________] ?% ? p/s 11s
+🔥  Creating docker container (CPUs=2, Memory=8000MB) ...
+🐳  Preparing Kubernetes v1.24.1 on Docker 20.10.17 ...
+    ▪ Generating certificates and keys ...
+    ▪ Booting up control plane ...
+    ▪ Configuring RBAC rules ...
+🔗  Configuring CNI (Container Networking Interface) ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: storage-provisioner, default-storageclass
 
-Caso os comandos acima sejam executados sem erro, a instalação do Minikube foi realizada com sucesso.
+👍  Starting worker node minikube-m02 in cluster minikube
+🚜  Pulling base image ...
+🔥  Creating docker container (CPUs=2, Memory=8000MB) ...
+🌐  Found network options:
+    ▪ NO_PROXY=192.168.11.11
+🐳  Preparing Kubernetes v1.24.1 on Docker 20.10.17 ...
+    ▪ env NO_PROXY=192.168.11.11
+🔎  Verifying Kubernetes components...
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
 
-## Descobrindo o endereço do Minikube
+  Para visualizar os nós do seu novo cluster Kubernetes, digite:
 
+kubectl get nodes
+  Inicialmente, a intenção do Minikube é executar o k8s em apenas um nó, porém a partir da versão 1.10.1 e possível usar a função de multi-node.
+
+Caso os comandos anteriores tenham sido executados sem erro, a instalação do Minikube terá sido realizada com sucesso.
+
+Ver detalhes sobre o cluster
+minikube status
+ 
+
+Descobrindo o endereço do Minikube
 Como dito anteriormente, o Minikube irá criar uma máquina virtual, assim como o ambiente para a execução do k8s localmente. Ele também irá configurar o kubectl para comunicar-se com o Minikube. Para saber qual é o endereço IP dessa máquina virtual, pode-se executar:
 
-```
-# minikube ip
-```
+minikube ip
+  O endereço apresentado é que deve ser utilizado para comunicação com o k8s.
 
-O endereço apresentado é o qual deve ser utilizado para comunicação com o k8s.
-
-## Acessando a máquina do Minikube via SSH
-
+Acessando a máquina do Minikube via SSH
 Para acessar a máquina virtual criada pelo Minikube, pode-se executar:
 
-```
-# minikube ssh
-```
+minikube ssh
+ 
 
-## Dashboard
+Dashboard do Minikube
+O Minikube vem com um dashboard web interessante para que o usuário iniciante observe como funcionam os workloads sobre o k8s. Para habilitá-lo, o usuário pode digitar:
 
-O Minikube vem com um dashboard web interessante para que o usuário iniciante observe como funcionam os *workloads* sobre o k8s. Para habilitá-lo, o usuário pode digitar:
+minikube dashboard
+ 
 
-```
-# minikube dashboard
-```
+Logs do Minikube
+Os logs do Minikube podem ser acessados através do seguinte comando.
 
-## Logs
+minikube logs
+ 
 
-Os logs do Minikube podem ser acessados através do comando:
+Remover o cluster
+minikube delete
+  Caso queira remover o cluster e todos os arquivos referente a ele, utilize o parametro --purge, conforme abaixo:
 
-```
-# minikube logs
-```
+minikube delete --purge
+ 
 
-# Instalação em cluster com três nós
+Kind
+O Kind (Kubernetes in Docker) é outra alternativa para executar o Kubernetes num ambiente local para testes e aprendizado, mas não é recomendado para uso em produção.
 
-## Requisitos básicos
+Instalação no GNU/Linux
+Para fazer a instalação no GNU/Linux, execute os seguintes comandos.
 
-Como já dito anteriormente, o Minikube é ótimo para desenvolvedores, estudos, testes, mas não tem como propósito a execução em ambiente de produção. Dito isso, a instalação de um cluster k8s para o treinamento irá requerer pelo menos três máquinas, físicas ou virtuais, cada qual com no mínimo a seguinte configuração:
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.14.0/kind-linux-amd64
 
-- Distribuição: Debian, Ubuntu, CentOS, Red Hat, Fedora, SuSE;
+chmod +x ./kind
 
-- Processamento: 2 *cores*;
+sudo mv ./kind /usr/local/bin/kind
+ 
 
-- Memória: 2GB
+Instalação no MacOS
+Para fazer a instalação no MacOS, execute o seguinte comando.
 
-## Configuração de módulos de kernel
+sudo brew install kind
+  ou
 
-*Todos os comandos desta seção devem ser realizados como superusuário, salvo se dito o contrário.*
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.14.0/kind-darwin-amd64
+chmod +x ./kind
+mv ./kind /usr/bin/kind
+ 
 
-O k8s requer que certos módulos do kernel Linux estejam carregados para seu pleno funcionamento, e que esses módulos sejam carregados no momento da inicialização da máquina. Para tanto, crie o arquivo ```/etc/modules-load.d/k8s.conf```com o seguinte conteúdo em todos os seus nós:
+Instalação no Windows
+Para fazer a instalação no Windows, execute os seguintes comandos.
 
-```textile
-br_netfilter
-ip_vs
-ip_vs_rr
-ip_vs_sh
-ip_vs_wrr
-nf_conntrack_ipv4
-```
+curl.exe -Lo kind-windows-amd64.exe https://kind.sigs.k8s.io/dl/v0.14.0/kind-windows-amd64
 
-## Atualização da distribuição
+Move-Item .\kind-windows-amd64.exe c:\kind.exe
+ 
 
-*Todos os comandos desta seção devem ser realizados como superusuário, salvo se dito o contrário.*
+Instalação no Windows via Chocolatey
+Execute o seguinte comando para instalar o Kind no Windows usando o Chocolatey.
 
-Em distribuições Debian e baseadas, como o Ubuntu execute o comando abaixo para atualizar a mesma em todos os seus nós:
+choco install kind
+ 
 
-```
-# apt update && apt upgrade -y
-```
+Criando um cluster com o Kind
+Após realizar a instalação do Kind, vamos iniciar o nosso cluster.
 
-Em distribuições Red Hat e baseadas:
+kind create cluster
 
-```bash
-# yum upgrade -y
-```
+Creating cluster "kind" ...
+ ✓ Ensuring node image (kindest/node:v1.24.0) 🖼
+ ✓ Preparing nodes 📦  
+ ✓ Writing configuration 📜 
+ ✓ Starting control-plane 🕹️ 
+ ✓ Installing CNI 🔌 
+ ✓ Installing StorageClass 💾 
+Set kubectl context to "kind-kind"
+You can now use your cluster with:
 
-## Instalação do Docker e do Kubernetes
+kubectl cluster-info --context kind-kind
 
-A instalação do Docker pode ser realizada com apenas um comando, que deve ser realizado nos três nós:
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
 
-```
-# curl -fsSL https://get.docker.com | bash
-```
+  É possível criar mais de um cluster e personalizar o seu nome.
 
-O próximo passo é efetuar a adição dos repositórios do k8s e efetuar a instalação do kubeadm. Em distribuições Debian e baseadas, isso pode ser realizado com os comandos abaixo:
+kind create cluster --name giropops
 
-```
-# apt-get update && apt-get install -y apt-transport-https
-# curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-# echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
-# apt-get update
-# apt-get install -y kubelet kubeadm kubectl
-```
+Creating cluster "giropops" ...
+ ✓ Ensuring node image (kindest/node:v1.24.0) 🖼
+ ✓ Preparing nodes 📦  
+ ✓ Writing configuration 📜 
+ ✓ Starting control-plane 🕹️ 
+ ✓ Installing CNI 🔌 
+ ✓ Installing StorageClass 💾 
+Set kubectl context to "kind-giropops"
+You can now use your cluster with:
 
-Já em distribuições Red Hat e baseadas, adiciona-se o repositório do k8s criando o arquivo ```/etc/yum.repos.d/kubernetes.repo``` com o conteúdo abaixo:
+kubectl cluster-info --context kind-giropops
 
-```textile
-[kubernetes]
-name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-```
+Thanks for using kind! 😊
+  Para visualizar os seus clusters utilizando o kind, execute o comando a seguir.
 
-Os comandos abaixo desativam o firewall, instalam os pacotes do k8s e ativam o serviço do mesmo:
+kind get clusters
+  Liste os nodes do cluster.
 
-```
-# setenforce 0
-# systemctl stop firewalld
-# systemctl disable firewalld
-# yum install -y kubelet kubeadm kubectl
-# systemctl enable kubelet && systemctl start kubelet
-```
+kubectl get nodes
+ 
 
-Ainda em distribuições Red Hat e baseadas, é necessário a configuração de alguns parâmetros extras no kernel por meio do sysctl. Estes podem ser setados criando o arquivo ```/etc/sysctl.d/k8s.conf``` com o seguinte conteúdo:
+Criando um cluster com múltiplos nós locais com o Kind
+É possível para essa aula incluir múltiplos nós na estrutura do Kind, que foi mencionado anteriormente.
 
-```textile
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-```
+Execute o comando a seguir para selecionar e remover todos os clusters locais criados no Kind.
 
-Agora, em ambas as distribuições e famílias, é muito importante verificar se o driver do cgroup utilizado pelo kubelet é o mesmo utilizado pelo Docker. Para tanto, execute:
+kind delete clusters $(kind get clusters)
 
-```
-# docker info | grep -i cgroup
-Cgroup Driver: cgroupfs
+Deleted clusters: ["giropops" "kind"]
+  Crie um arquivo de configuração para definir quantos e o tipo de nós no cluster que você deseja. No exemplo a seguir, será criado o arquivo de configuração kind-3nodes.yaml para especificar um cluster com 1 nó control-plane (que executará o control plane) e 2 workers.
 
-# sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-# systemctl daemon-reload
-# systemctl restart kubelet
-```
+cat << EOF > $HOME/kind-3nodes.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+EOF
+  Agora vamos criar um cluster chamado kind-multinodes utilizando as especificações definidas no arquivo kind-3nodes.yaml.
 
-É necessário também desativar a swap em todos os nós com:
+kind create cluster --name kind-multinodes --config $HOME/kind-3nodes.yaml
 
-```
-# swapoff -a
-```
+Creating cluster "kind-multinodes" ...
+ ✓ Ensuring node image (kindest/node:v1.24.0) 🖼
+ ✓ Preparing nodes 📦 📦 📦  
+ ✓ Writing configuration 📜 
+ ✓ Starting control-plane 🕹️ 
+ ✓ Installing CNI 🔌 
+ ✓ Installing StorageClass 💾 
+ ✓ Joining worker nodes 🚜 
+Set kubectl context to "kind-kind-multinodes"
+You can now use your cluster with:
 
-Além de comentar a linha referente à mesma no arquivo ```/etc/fstab```.
+kubectl cluster-info --context kind-kind-multinodes
 
-Após esses procedimentos, é interessante a reinicialização de todos os nós do *cluster*.
+Have a question, bug, or feature request? Let us know! https://kind.sigs.k8s.io/#community 🙂
+  Valide a criação do cluster com o comando a seguir.
 
-## Inicialização do cluster
+kubectl get nodes
+  Mais informações sobre o Kind estão disponíveis em: https://kind.sigs.k8s.io
 
-Antes de inicializarmos o *cluster*, vamos efetuar o *download* das imagens que serão utilizadas, executando o comando abaixo no nó que será o *master*:
+ 
 
-```
-# kubeadm config images pull
-```
+Primeiros passos no k8s
+ 
 
-Execute o comando abaixo também apenas no nó *master* para a inicialização do cluster. Caso tudo esteja bem, será apresentada ao término de sua execução o comando que deve ser executado nos demais nós para ingressar no cluster.
+Verificando os namespaces e pods
+O k8s organiza tudo dentro de namespaces. Por meio deles, podem ser realizadas limitações de segurança e de recursos dentro do cluster, tais como pods, replication controllers e diversos outros. Para visualizar os namespaces disponíveis no cluster, digite:
 
-```
-# kubeadm init --apiserver-advertise-address $(hostname -i)
-```
+kubectl get namespaces
+  Vamos listar os pods do namespace kube-system utilizando o comando a seguir.
 
-A saída do comando será algo similar ao abaixo:
+kubectl get pod -n kube-system
+  Será que há algum pod escondido em algum namespace? É possível listar todos os pods de todos os namespaces com o comando a seguir.
 
-```
-    [WARNING SystemVerification]: docker version is greater than the most recently validated version. Docker version: 18.05.0-ce. Max validated version: 17.03
-...
-To start using your cluster, you need to run the following as a regular user:
+kubectl get pods -A
+  Há a possibilidade ainda, de utilizar o comando com a opção -o wide, que disponibiliza maiores informações sobre o recurso, inclusive em qual nó o pod está sendo executado. Exemplo:
 
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
-... 
-kubeadm join --token 39c341.a3bc3c4dd49758d5 IP_DO_MASTER:6443 --discovery-token-ca-cert-hash sha256:37092
-...
-```
+kubectl get pods -A -o wide
+ 
 
-## Configuração do arquivo de contextos do kubectl
+Executando nosso primeiro pod no k8s
+Iremos iniciar o nosso primeiro pod no k8s. Para isso, executaremos o comando a seguir.
 
-Como dito anteriormente e de forma similar ao Docker Swarm, o próprio kubeadm já mostrará os comandos necessários para a configuração do kubectl de modo para que ele já se comunique com o cluster k8s. Para tanto, execute os comandos abaixo:
+kubectl run nginx --image nginx
 
-```
-# mkdir -p $HOME/.kube
-# sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-# sudo chown $(id -u):$(id -g) $HOME/.kube/config
-```
-
-## Inserindo os nós workers no cluster
-
-Para inserir os nós *workers* no cluster, basta executar a linha que começa com ```kubeadm join``` nos mesmos.
-
-## Instalação do pod network
-
-Para os usuários do Docker Swarm, há uma diferença entre os dois orquestradores: o k8s por padrão não fornece uma forma para que pods e nós que estejam em nós distintos do *cluster* se comuniquem *out-of-the-box*. Para que isso ocorra, deve ser instalada uma solução de *pod networking* como *add-on*, existindo diversas opções disponíveis, cada qual com funcionalidades diferentes, como o [Flannel]([GitHub - coreos/flannel: flannel is a network fabric for containers, designed for Kubernetes](https://github.com/coreos/flannel#flannel)), o [Calico](http://docs.projectcalico.org/), [Romana](http://romana.io/), [Weave-net]([Weave Net: Network Containers Across Environments | Weaveworks](https://www.weave.works/products/weave-net/)), etc.
-
-Mais sobre *pod networking* será tratado nos demais dias do treinamento.
-
-Caso você ainda não tenha reiniciado os nós que compõem o seu *cluster*, você pode carregar os módulos do kernel necessários com o seguinte comando:
-
-```
-# modprobe br_netfilter ip_vs_rr ip_vs_wrr ip_vs_sh nf_conntrack_ipv4 ip_vs
-```
-
-No curso, nós iremos utilizar o Weave-net, que pode ser instalado com o comando abaixo:
-
-```
-# kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-```
-
-Verificando se o *pod network* foi criado com sucesso com o comando ```kubectl get pods -n kube-system```:
-
-```
-NAME                                READY   STATUS    RESTARTS   AGE
-coredns-66bff467f8-pfm2c            1/1     Running   0          8d
-coredns-66bff467f8-s8pk4            1/1     Running   0          8d
-etcd-docker-01                      1/1     Running   0          8d
-kube-apiserver-docker-01            1/1     Running   0          8d
-kube-controller-manager-docker-01   1/1     Running   0          8d
-kube-proxy-mdcgf                    1/1     Running   0          8d
-kube-proxy-q9cvf                    1/1     Running   0          8d
-kube-proxy-vf8mq                    1/1     Running   0          8d
-kube-scheduler-docker-01            1/1     Running   0          8d
-weave-net-7dhpf                     2/2     Running   0          8d
-weave-net-fvttp                     2/2     Running   0          8d
-weave-net-xl7km                     2/2     Running   0          8d
-```
-
-Pode-se observar que há três containers do Weave-net em execução provendo a *pod network* para o nosso *cluster*.
-
-## Verificando a instalação
-
-Para verificar se a instalação está funcionando, e se os nós estão se comunicando, você pode executar o comando ```kubectl get nodes```no nó master, que deve lhe retornar algo como o conteúdo abaixo:
-
-```
-NAME        STATUS   ROLES    AGE   VERSION
-docker-01   Ready    master   8d    v1.18.2
-docker-02   Ready    <none>   8d    v1.18.2
-docker-03   Ready    <none>   8d    v1.18.2
-```
-
-# Primeiros passos no k8s
-
-## Exibindo informações detalhadas sobre os nós
-
-```
-# kubectl describe node [nó]
-```
-
-Exemplo:
-
-```
-# kubectl describe node docker-02
-Name:               docker-02
-Roles:              <none>
-Labels:             beta.kubernetes.io/arch=amd64
-                    beta.kubernetes.io/os=linux
-                    kubernetes.io/arch=amd64
-                    kubernetes.io/hostname=docker-02
-                    kubernetes.io/os=linux
-Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
-                    node.alpha.kubernetes.io/ttl: 0
-                    volumes.kubernetes.io/controller-managed-attach-detach: true
-```
-
-## Exibindo novamente token para entrar no cluster
-
-Para visualizar novamente o token para inserção de novos nodes:
-
-```
-# kubeadm token create --print-join-command
-```
-
-## Ativando o autocomplete
-
-Em distribuições Debian e baseadas, certifique-se que o pacote ```bash-completion``` esteja instalado. Instale-o com:
-
-```
-# apt install -y bash-completion
-```
-
-Em sistemas Red Hat e baseados, execute:
-
-```
-# yum install -y bash-completion
-```
-
-Feito isso, execute o seguinte comando:
-
-```
-# kubectl completion bash > /etc/bash_completion.d/kubectl
-```
-
-Efetue *logoff* e *login* para carregar o *autocomplete*. Caso não deseje, execute:
-
-```
-# source < (kubectl completion bash)
-```
-
-## Verificando os namespaces e pods
-
-O k8s organiza tudo dentro de *namespaces*. Por meio deles, podem ser realizadas limitações de segurança e de recursos dentro do *cluster*. Para visualizar os *namespaces* disponíveis no *cluster*, digite:
-
-```
-# kubectl get namespaces
-NAME              STATUS   AGE
-default           Active   8d
-kube-node-lease   Active   8d
-kube-public       Active   8d
-kube-system       Active   8d
-```
-
-Vamos listar os *pods* do *namespace* **kube-system**:
-
-```
-# kubectl get pod -n kube-system
-NAME                                READY   STATUS    RESTARTS   AGE
-coredns-66bff467f8-pfm2c            1/1     Running   0          8d
-coredns-66bff467f8-s8pk4            1/1     Running   0          8d
-etcd-docker-01                      1/1     Running   0          8d
-kube-apiserver-docker-01            1/1     Running   0          8d
-kube-controller-manager-docker-01   1/1     Running   0          8d
-kube-proxy-mdcgf                    1/1     Running   0          8d
-kube-proxy-q9cvf                    1/1     Running   0          8d
-kube-proxy-vf8mq                    1/1     Running   0          8d
-kube-scheduler-docker-01            1/1     Running   0          8d
-weave-net-7dhpf                     2/2     Running   0          8d
-weave-net-fvttp                     2/2     Running   0          8d
-weave-net-xl7km                     2/2     Running   0          8d
-```
-
-Será que há algum *pod* escondido em algum *namespace*? É possível listar todos os *pods* de todos os *namespaces* com o comando abaixo:
-
-```
-# kubectl get pods --all-namespaces
-```
-
-Há a possibilidade, ainda, de utilizar o comando com a opção ```-o wide```, que disponibiliza maiores informações sobre o recurso, inclusive em qual nó o *pod* está sendo executado. Exemplo:
-
-```
-# kubectl get pods --all-namespaces -o wide
-NAMESPACE     NAME                                READY   STATUS    RESTARTS   AGE   IP             NODE        NOMINATED NODE   READINESS GATES
-default       nginx                               1/1     Running   0          24m   10.44.0.1      docker-02   <none>           <none>
-kube-system   coredns-66bff467f8-pfm2c            1/1     Running   0          8d    10.32.0.3      docker-01   <none>           <none>
-kube-system   coredns-66bff467f8-s8pk4            1/1     Running   0          8d    10.32.0.2      docker-01   <none>           <none>
-kube-system   etcd-docker-01                      1/1     Running   0          8d    172.16.83.14   docker-01   <none>           <none>
-kube-system   kube-apiserver-docker-01            1/1     Running   0          8d    172.16.83.14   docker-01   <none>           <none>
-kube-system   kube-controller-manager-docker-01   1/1     Running   0          8d    172.16.83.14   docker-01   <none>           <none>
-kube-system   kube-proxy-mdcgf                    1/1     Running   0          8d    172.16.83.14   docker-01   <none>           <none>
-kube-system   kube-proxy-q9cvf                    1/1     Running   0          8d    172.16.83.12   docker-03   <none>           <none>
-kube-system   kube-proxy-vf8mq                    1/1     Running   0          8d    172.16.83.13   docker-02   <none>           <none>
-kube-system   kube-scheduler-docker-01            1/1     Running   0          8d    172.16.83.14   docker-01   <none>           <none>
-kube-system   weave-net-7dhpf                     2/2     Running   0          8d    172.16.83.12   docker-03   <none>           <none>
-kube-system   weave-net-fvttp                     2/2     Running   0          8d    172.16.83.13   docker-02   <none>           <none>
-kube-system   weave-net-xl7km                     2/2     Running   0          8d    172.16.83.14   docker-01   <none>           <none>
-```
-
-## Executando nosso primeiro pod no k8s
-
-Iremos iniciar o nosso primeiro *pod* no k8s. Para isso, executaremos o comando abaixo:
-
-```
-# kubectl run nginx --image nginx
 pod/nginx created
-```
+  Listando os pods com kubectl get pods, obteremos a seguinte saída.
 
-Listando os *pods* com ```kubectl get pods```, obteremos a seguinte saída:
-
-```
 NAME    READY   STATUS    RESTARTS   AGE
 nginx   1/1     Running   0          66s
-```
+  Vamos agora remover o nosso pod com o seguinte comando.
 
-Vamos olhar agora a descrição desse objeto dentro do *cluster*:
+kubectl delete pod nginx
+  A saída deve ser algo como:
 
-```
-# kubectl describe pod nginx
-Name:         nginx
-Namespace:    default
-Priority:     0
-Node:         docker-02/172.16.83.13
-Start Time:   Tue, 12 May 2020 02:29:38 -0300
-Labels:       run=nginx
-Annotations:  <none>
-Status:       Running
-IP:           10.44.0.1
-IPs:
-  IP:  10.44.0.1
-Containers:
-  nginx:
-    Container ID:   docker://2719e2bc023944ee8f34db538094c96b24764a637574c703e232908b46b12a9f
-    Image:          nginx
-    Image ID:       docker-pullable://nginx@sha256:86ae264c3f4acb99b2dee4d0098c40cb8c46dcf9e1148f05d3a51c4df6758c12
-    Port:           <none>
-    Host Port:      <none>
-    State:          Running
-      Started:      Tue, 12 May 2020 02:29:42 -0300
-```
-
-## Verificar os últimos eventos do cluster
-
-Você pode verificar quais são os últimos eventos do *cluster* com o comando ```kubectl get events```. Serão mostrados eventos como o *download* de imagens do Docker Hub (ou de outro *registry* configurado), a criação/remoção de *pods*, etc. Abaixo o resultado da criação do nosso container com Nginx:
-
-```
-LAST SEEN   TYPE     REASON      OBJECT      MESSAGE
-5m34s       Normal   Scheduled   pod/nginx   Successfully assigned default/nginx to docker-02
-5m33s       Normal   Pulling     pod/nginx   Pulling image "nginx"
-5m31s       Normal   Pulled      pod/nginx   Successfully pulled image "nginx"
-5m30s       Normal   Created     pod/nginx   Created container nginx
-5m30s       Normal   Started     pod/nginx   Started container nginx
-```
-
-## Efetuar o dump de um objeto em formato YAML
-
-Assim como quando se está trabalhando com *stacks* no Docker Swarm, normalmente recursos no k8s são declarados em arquivos **YAML** ou **JSON** e depois manipulados através do kubectl. Para nos poupar o trabalho de escrever o arquivo inteiro, pode-se utilizar como *template* o *dump* de um objeto já existente no k8s, como mostrado abaixo:
-
-```
-# kubectl get node nginx -o yaml > meu-primeiro.yaml
-```
-
-Será criado um novo arquivo chamado ```meu-primeiro.yaml```, resultante do redirecionamento da saída do comando ```kubectl get node nginx -o yaml```.
-
-Abrindo o arquivo com ```vim meu-primeiro.yaml``` (você pode utilizar o editor que você preferir), teremos o seguinte conteúdo:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  creationTimestamp: "2020-05-12T05:29:38Z"
-  labels:
-    run: nginx
-  managedFields:
-  - apiVersion: v1
-    fieldsType: FieldsV1
-    fieldsV1:
-      f:metadata:
-        f:labels:
-          .: {}
-          f:run: {}
-      f:spec:
-        f:containers:
-          k:{"name":"nginx"}:
-            .: {}
-            f:image: {}
-            f:imagePullPolicy: {}
-            f:name: {}
-            f:resources: {}
-            f:terminationMessagePath: {}
-            f:terminationMessagePolicy: {}
-        f:dnsPolicy: {}
-        f:enableServiceLinks: {}
-        f:restartPolicy: {}
-        f:schedulerName: {}
-        f:securityContext: {}
-        f:terminationGracePeriodSeconds: {}
-    manager: kubectl
-    operation: Update
-    time: "2020-05-12T05:29:38Z"
-  - apiVersion: v1
-    fieldsType: FieldsV1
-    fieldsV1:
-      f:status:
-        f:conditions:
-          k:{"type":"ContainersReady"}:
-            .: {}
-            f:lastProbeTime: {}
-            f:lastTransitionTime: {}
-            f:status: {}
-            f:type: {}
-          k:{"type":"Initialized"}:
-            .: {}
-            f:lastProbeTime: {}
-            f:lastTransitionTime: {}
-            f:status: {}
-            f:type: {}
-          k:{"type":"Ready"}:
-            .: {}
-            f:lastProbeTime: {}
-            f:lastTransitionTime: {}
-            f:status: {}
-            f:type: {}
-        f:containerStatuses: {}
-        f:hostIP: {}
-        f:phase: {}
-        f:podIP: {}
-        f:podIPs:
-          .: {}
-          k:{"ip":"10.44.0.1"}:
-            .: {}
-            f:ip: {}
-        f:startTime: {}
-    manager: kubelet
-    operation: Update
-    time: "2020-05-12T05:29:43Z"
-  name: nginx
-  namespace: default
-  resourceVersion: "1673991"
-  selfLink: /api/v1/namespaces/default/pods/nginx
-  uid: 36506f7b-1f3b-4ee8-b063-de3e6d31bea9
-spec:
-  containers:
-  - image: nginx
-    imagePullPolicy: Always
-    name: nginx
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
-    volumeMounts:
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: default-token-nkz89
-      readOnly: true
-  dnsPolicy: ClusterFirst
-  enableServiceLinks: true
-  nodeName: docker-02
-  priority: 0
-  restartPolicy: Always
-  schedulerName: default-scheduler
-  securityContext: {}
-  serviceAccount: default
-  serviceAccountName: default
-  terminationGracePeriodSeconds: 30
-  tolerations:
-  - effect: NoExecute
-    key: node.kubernetes.io/not-ready
-    operator: Exists
-    tolerationSeconds: 300
-  - effect: NoExecute
-    key: node.kubernetes.io/unreachable
-    operator: Exists
-    tolerationSeconds: 300
-  volumes:
-  - name: default-token-nkz89
-    secret:
-      defaultMode: 420
-      secretName: default-token-nkz89
-status:
-  conditions:
-  - lastProbeTime: null
-    lastTransitionTime: "2020-05-12T05:29:38Z"
-    status: "True"
-    type: Initialized
-  - lastProbeTime: null
-    lastTransitionTime: "2020-05-12T05:29:43Z"
-    status: "True"
-    type: Ready
-  - lastProbeTime: null
-    lastTransitionTime: "2020-05-12T05:29:43Z"
-    status: "True"
-    type: ContainersReady
-  - lastProbeTime: null
-    lastTransitionTime: "2020-05-12T05:29:38Z"
-    status: "True"
-    type: PodScheduled
-  containerStatuses:
-  - containerID: docker://2719e2bc023944ee8f34db538094c96b24764a637574c703e232908b46b12a9f
-    image: nginx:latest
-    imageID: docker-pullable://nginx@sha256:86ae264c3f4acb99b2dee4d0098c40cb8c46dcf9e1148f05d3a51c4df6758c12
-    lastState: {}
-    name: nginx
-    ready: true
-    restartCount: 0
-    started: true
-    state:
-      running:
-        startedAt: "2020-05-12T05:29:42Z"
-  hostIP: 172.16.83.13
-  phase: Running
-  podIP: 10.44.0.1
-  podIPs:
-  - ip: 10.44.0.1
-  qosClass: BestEffort
-  startTime: "2020-05-12T05:29:38Z"
-```
-
-Observando o arquivo acima, notamos que este reflete o **estado** do *pod* e que como desejamos utilizar tal arquivo apenas como um modelo, podemos apagar as entradas que armazenam dados de estado desse *pod*, como *status* e todas as demais configurações que são específicas dele. O arquivo final ficará semelhante a este:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  creationTimestamp: null
-  labels:
-    run: nginx
-  name: nginx
-spec:
-  containers:
-  - image: nginx
-    name: nginx
-    resources: {}
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
-status: {}
-```
-
-Vamos agora remover o nosso *pod* com ```kubectl delete pod nginx```. A saída deve ser algo como:
-
-```
 pod "nginx" deleted
-```
+ 
 
-Vamos recriá-lo, agora a partir do nosso arquivo YAML:
-
-```
-# kubect create -f meu-primeiro.yaml
-pod/nginx created
-```
-
-Observem que não foi necessário informar ao kubectl qual tipo de recurso seria criado, pois isso já está contido dentro do arquivo. Listando os *pods* disponíveis com ```kubectl get pods``` deve-se obter uma saída similar à esta:
-
-```
-NAME    READY   STATUS    RESTARTS   AGE
-nginx   1/1     Running   0          109s
-```
-
-Uma outra forma de criar um arquivo de *template* é através da opção ```--dry-run``` do kubectl, com o funcionamento ligeiramente diferente dependendo do tipo de recurso que será criado. Exemplos:
-
-Para a criação de um template de um *pod:*
-
-```
-# kubectl run meu-nginx --image nginx --dry-run=client -o yaml > pod-template.yaml
-```
-
-Para a criação de um template de um *deployment*:
-
-```
-# kubectl create deployment meu-nginx --image=nginx --dry-run=client -o yaml > deployment-template.yaml
-```
-
-A vantagem deste método é que não há a necessidade de limpar o arquivo, além de serem apresentadas apenas as opções necessárias do recurso.
-
-## Socorro, são muitas opções!
-
-Calma, nós sabemos. Mas o kubectl pode lhe auxiliar um pouco em relação a isso. Ele contém a opção ```explain```, que você pode utilizar caso precise de ajuda com alguma opção em específico dos arquivos de recurso. Abaixo alguns exemplos de sintaxe:
-
-```
-# kubectl explain [recurso]
-# kubectl explain [recurso.caminho.para.spec]
-# kubectl explain [recurso.caminho.para.spec] --recursive
-```
+Executando nosso primeiro pod no k8s
+Uma outra forma de criar um pod ou qualquer outro objeto no Kubernetes é através da utilizaçâo de uma arquivo manifesto, que é uma arquivo em formato YAML onde você passa todas as definições do seu objeto. Mas pra frente vamos falar muito mais sobre como construir arquivos manifesto, mas agora eu quero que você conheça a opção --dry-run do kubectl, pos com ele podemos simular a criação de um resource e ainda ter um manifesto criado automaticamente.
 
 Exemplos:
 
-```
-# kubectl explain deployment
-# kubectl explain pod --recursive
-# kubectl explain deployment.spect.template.spec
-```
+Para a criação do template de um pod:
 
-## Expondo o pod
+kubectl run meu-nginx --image nginx --dry-run=client -o yaml > pod-template.yaml
+  Aqui estamos utilizando ainda o parametro '-o', utilizando para modificar a saída para o formato YAML.
 
-Dispositivos fora do *cluster* por padrão não conseguem acessar os *pods* criados, como é comum em outros sistemas de containers. Para expor um *pod*, execute o comando abaixo:
+Para a criação do template de um deployment:
 
-```
-# kubectl expose pod nginx
-```
+Com o arquivo gerado em mãos, agora você consegue criar um pod utilizando o manifesto que criamos da seguinte forma:
 
+kubectl apply -f pod-template.yaml
+Não se preocupe por enquanto com o parametro 'apply', nós ainda vamos falar com mais detalhes sobre ele, nesse momento o importante é você saber que ele é utilizado para criar novos resources através de arquivos manifestos.
+
+ 
+
+Expondo o pod e criando um Service
+Dispositivos fora do cluster, por padrão, não conseguem acessar os pods criados, como é comum em outros sistemas de contêineres. Para expor um pod, execute o comando a seguir.
+
+kubectl expose pod nginx
 Será apresentada a seguinte mensagem de erro:
 
-```
 error: couldn't find port via --port flag or introspection
 See 'kubectl expose -h' for help and examples
-```
+O erro ocorre devido ao fato do k8s não saber qual é a porta de destino do contêiner que deve ser exposta (no caso, a 80/TCP). Para configurá-la, vamos primeiramente remover o nosso pod antigo:
 
-O motivo é devido ao fato de que o k8s não sabe qual é a porta destino do container que deve ser exposa (no caso, a 80/TCP). Para configurá-la, vamos primeiramente remover o nosso *pod* antigo:
+kubectl delete -f pod-template.yaml
+Agora vamos executar novamente o comando para a criação do pod utilizando o parametro 'dry-run', porém agora vamos adicionar o parametro '--port' para dizer qual a porta que o container está escutando, lembrando que estamos utilizando o nginx nesse exemplo, um webserver que escuta por padrão na porta 80.
 
-```
-# kubectl delete -f meu-primeiro.yaml
-```
+kubectl run meu-nginx --image nginx --dry-run=client -o yaml > pod-template.yaml
+kubectl create -f pod-template.yaml
+Liste os pods.
 
-Abra agora o arquivo meu-primeiro.yaml e adicione o bloco abaixo:
+kubectl get pods
 
-```yaml
-...
-spec:
-       containers:
-       - image: nginx
-         imagePullPolicy: Always
-         ports: 
-         - containerPort: 80
-         name: nginx
-         resources: {}
-...
-```
-
-Atenção: arquivos YAML utilizam para sua tabulação dois espaços e não tab.
-
-Feita a modificação no arquivo, salve-o e crie novamente o *pod* com o comando abaixo:
-
-```
-# kubectl create -f meu-primeiro.yaml
-pod/nginx created
-
-# kubectl get pod nginx
 NAME    READY   STATUS    RESTARTS   AGE
-nginx   1/1     Running   0          32s
+meu-nginx   1/1     Running   0          32s
+O comando a seguir cria um objeto do k8s chamado de Service, que é utilizado justamente para expor pods para acesso externo.
 
-# kubectl expose pod nginx
-service/nginx exposed
-```
+kubectl expose pod meu-nginx
+Podemos listar todos os services com o comando a seguir.
 
-O comando ```kubectl expose pod nginx``` cria um elemento do k8s chamado *Service*, utilizado justamente para expor *pods* para o mundo externo. Podemos listar todos os *services* com o comando abaixo:
+kubectl get services
 
-```
-# kubectl get services
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
 kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP   8d
 nginx        ClusterIP   10.105.41.192   <none>        80/TCP    2m30s
-```
+Como é possível observar, há dois services no nosso cluster: o primeiro é para uso do próprio k8s, enquanto o segundo foi o quê acabamos de criar.
 
-Pode é possível observar, há dois *services* no nosso *cluster*: o primeiro é para uso do próprio k8s, enquanto o segundo foi o quê acabamos de criar. Utilizando o ```curl```contra a o endereço IP mostrado na coluna *CLUSTER-IP*, deve nos ser apresentada a tela principal do Nginx:
+ 
 
-```
-# curl 10.105.41.192
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and
-working. Further configuration is required.</p>
+Limpando tudo e indo para casa
+Para mostrar todos os recursos recém criados, pode-se utilizar uma das seguintes opções a seguir.
 
-<p>For online documentation and support please refer to
-<a href="http://nginx.org/">nginx.org</a>.<br/>
-Commercial support is available at
-<a href="http://nginx.com/">nginx.com</a>.</p>
+kubectl get all
 
-<p><em>Thank you for using nginx.</em></p>
-</body>
-</html>
-```
+kubectl get pod,service
 
-Este *pod* está disponível para acesso a partir de qualquer nó do *cluster*.
+kubectl get pod,svc
+Note que o k8s nos disponibiliza algumas abreviações de seus recursos. Com o tempo você irá se familiar com elas. Para apagar os recursos criados, você pode executar os seguintes comandos.
 
-## Limpando tudo e indo para casa
-
-Para mostrar todos os recursos recém criados, pode-se utilizar uma das seguintes opções abaixo:
-
-```
-# kubectl get all
-# kubectl get pod,service
-# kubectl get pod,svc
-```
-
-Note que o k8s nos disponibiliza algumas abreviações de seus recursos. Com o tempo você irá se familiar com elas. Para apagar os recursos criados, você pode executar os seguintes comandos:
-
-```
-# kubectl delete -f meu-primeiro.yaml
-# kubectl delete service nginx
-```
-
+kubectl delete -f pod-template.yaml
+kubectl delete service nginx
 Liste novamente os recursos para ver se os mesmos ainda estão presentes.
