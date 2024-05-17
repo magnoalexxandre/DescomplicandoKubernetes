@@ -140,8 +140,8 @@ Abaixo um diagrama que mostra a arquitetura do k8s:
 
 - **Kube-proxy**: Age como um proxy e um load balancer. Este componente é responsável por efetuar roteamento de requisições para os pods corretos, como também por cuidar da parte de rede do nó;  
 
-## Portas que devemos nos preocupar \
-**CONTROL PLANE** \
+## Portas que devemos nos preocupar
+**CONTROL PLANE**
 
 Protocol	  Direction	  Port Range	    Purpose	Used By \
 TCP	        Inbound	    6443*	          Kubernetes API server	All \
@@ -171,8 +171,8 @@ Conceitos-chave do k8s
 - **Jobs e CronJobs**: Responsáveis pelo gerenciamento de tarefas isoladas ou recorrentes.
 
 ## Instalando e customizando o Kubectl
-Instalação do Kubectl no GNU/Linux \
-Vamos instalar o kubectl com os seguintes comandos. \
+## Instalação do Kubectl no GNU/Linux \
+Vamos instalar o kubectl com os seguintes comandos.
 
 curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
 
@@ -189,11 +189,12 @@ O kubectl pode ser instalado no MacOS utilizando tanto o Homebrew, quanto o mét
 sudo brew install kubectl
 
 kubectl version --client \
-  Ou: \
+  Ou:
 
 sudo brew install kubectl-cli
 
 kubectl version --client \
+
   Já com o método tradicional, a instalação pode ser realizada com os seguintes comandos.
 
 curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/darwin/amd64/kubectl"
@@ -205,22 +206,22 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 kubectl version --client
  
 
-## Instalação do Kubectl no Windows \
+## Instalação do Kubectl no Windows 
 A instalação do kubectl pode ser realizada efetuando o download neste link.
 
 Outras informações sobre como instalar o kubectl no Windows podem ser encontradas nesta página.
 
 Customizando o kubectl \
 Auto-complete \
-Execute o seguinte comando para configurar o alias e autocomplete para o kubectl. \
+Execute o seguinte comando para configurar o alias e autocomplete para o kubectl. 
 
 No Bash:
 
 source <(kubectl completion bash)      # configura o autocomplete na sua sessão atual (antes, certifique-se de ter instalado o pacote bash-completion).
 
-echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanentemente ao seu shell. \
+echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanentemente ao seu shell. 
 
-  No ZSH: \
+  No ZSH:
 
 source <(kubectl completion zsh)
 
@@ -228,15 +229,15 @@ echo "[[ $commands[kubectl] ]] && source <(kubectl completion zsh)"
  
 
 Criando um alias para o kubectl \
-Crie o alias k para kubectl: \
+Crie o alias k para kubectl: 
 
 alias k=kubectl
 
 complete -F __start_kubectl k
  
 
-Criando um cluster Kubernetes
-Criando o cluster em sua máquina local
+Criando um cluster Kubernetes \
+Criando o cluster em sua máquina local \
 Vamos mostrar algumas opções, caso você queira começar a brincar com o Kubernetes utilizando somente a sua máquina local, o seu desktop.
 
 Lembre-se, você não é obrigado a testar/utilizar todas as opções abaixo, mas seria muito bom caso você testasse. :D
@@ -247,13 +248,13 @@ Requisitos básicos \
 
 Processamento: 1 core; \
 Memória: 2 GB; \
-HD: 20 GB. \
+HD: 20 GB.
 
 ## Instalação do Minikube no GNU/Linux 
 Antes de mais nada, verifique se a sua máquina suporta virtualização. No GNU/Linux, isto pode ser realizado com o seguinte comando:
 
 grep -E --color 'vmx|svm' /proc/cpuinfo \
-  Caso a saída do comando não seja vazia, o resultado é positivo. \
+  Caso a saída do comando não seja vazia, o resultado é positivo. 
 
 Há a possibilidade de não utilizar um hypervisor para a instalação do Minikube, executando-o ao invés disso sobre o próprio host. Iremos utilizar o Oracle VirtualBox como hypervisor, que pode ser encontrado aqui.
 
@@ -272,14 +273,14 @@ minikube version
 No MacOS, o comando para verificar se o processador suporta virtualização é:
 
 sysctl -a | grep -E --color 'machdep.cpu.features|VMX' \
-  Se você visualizar VMX na saída, o resultado é positivo. \
+  Se você visualizar VMX na saída, o resultado é positivo.
 
 Efetue a instalação do Minikube com um dos dois métodos a seguir, podendo optar-se pelo Homebrew ou pelo método tradicional. \
 
-sudo brew install minikube \
+sudo brew install minikube
 
 minikube version \
-  Ou: \
+  Ou:
 
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
 
@@ -297,7 +298,7 @@ Hyper-V Requirements:     VM Monitor Mode Extensions: Yes \
                           Virtualization Enabled In Firmware: Yes \
                           Second Level Address Translation: Yes \
                           Data Execution Prevention Available: Yes \
-  Caso a linha a seguir também esteja presente, não é necessária a instalação de um hypervisor como o Oracle VirtualBox: \
+  Caso a linha a seguir também esteja presente, não é necessária a instalação de um hypervisor como o Oracle VirtualBox:
 
 Hyper-V Requirements:     A hypervisor has been detected. Features required for Hyper-V will not be displayed.:     A hypervisor has been detected. Features required for Hyper-V will not be displayed. \
   Faça o download e a instalação de um hypervisor (preferencialmente o Oracle VirtualBox), caso no passo anterior não tenha sido acusada a presença de um. Finalmente, efetue o download do instalador do Minikube aqui e execute-o.
@@ -367,29 +368,29 @@ minikube start --nodes 2 -p multinode-cluster
 🐳  Preparing Kubernetes v1.24.1 on Docker 20.10.17 ... \
     ▪ env NO_PROXY=192.168.11.11 \
 🔎  Verifying Kubernetes components... \
-🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default \
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
 
   Para visualizar os nós do seu novo cluster Kubernetes, digite:
 
 kubectl get nodes \
-  Inicialmente, a intenção do Minikube é executar o k8s em apenas um nó, porém a partir da versão 1.10.1 e possível usar a função de multi-node. \
+  Inicialmente, a intenção do Minikube é executar o k8s em apenas um nó, porém a partir da versão 1.10.1 e possível usar a função de multi-node.
 
-Caso os comandos anteriores tenham sido executados sem erro, a instalação do Minikube terá sido realizada com sucesso. \
+Caso os comandos anteriores tenham sido executados sem erro, a instalação do Minikube terá sido realizada com sucesso.
 
 Ver detalhes sobre o cluster \
-minikube status \
+minikube status
  
 
 Descobrindo o endereço do Minikube \
 Como dito anteriormente, o Minikube irá criar uma máquina virtual, assim como o ambiente para a execução do k8s localmente. Ele também irá configurar o kubectl para comunicar-se com o Minikube. Para saber qual é o endereço IP dessa máquina virtual, pode-se executar:
 
 minikube ip \
-  O endereço apresentado é que deve ser utilizado para comunicação com o k8s. \
+  O endereço apresentado é que deve ser utilizado para comunicação com o k8s.
 
 Acessando a máquina do Minikube via SSH \
-Para acessar a máquina virtual criada pelo Minikube, pode-se executar: \
+Para acessar a máquina virtual criada pelo Minikube, pode-se executar:
 
-minikube ssh \
+minikube ssh
  
 
 Dashboard do Minikube \
@@ -428,11 +429,11 @@ sudo mv ./kind /usr/local/bin/kind
 Para fazer a instalação no MacOS, execute o seguinte comando.
 
 sudo brew install kind \
-  ou \
+  ou 
 
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.14.0/kind-darwin-amd64 \
 chmod +x ./kind \
-mv ./kind /usr/bin/kind \
+mv ./kind /usr/bin/kind 
  
 
 ## Instalação no Windows
@@ -462,9 +463,9 @@ Creating cluster "kind" ... \
  ✓ Installing CNI 🔌  \
  ✓ Installing StorageClass 💾  \
 Set kubectl context to "kind-kind" \
-You can now use your cluster with: \
+You can now use your cluster with: 
 
-kubectl cluster-info --context kind-kind \
+kubectl cluster-info --context kind-kind 
 
 Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
 
@@ -506,11 +507,11 @@ Deleted clusters: ["giropops" "kind"] \
 cat << EOF > $HOME/kind-3nodes.yaml \
 kind: Cluster \
 apiVersion: kind.x-k8s.io/v1alpha4 \
-nodes: \
-  - role: control-plane \
-  - role: worker \
-  - role: worker \
-EOF \
+nodes: 
+  - role: control-plane 
+  - role: worker 
+  - role: worker 
+EOF 
   
 Agora vamos criar um cluster chamado kind-multinodes utilizando as especificações definidas no arquivo kind-3nodes.yaml.
 
@@ -546,7 +547,7 @@ br_netfilter \
 EOF
 
 # Aplicando os modulos
-sudo modprobe overlay /
+sudo modprobe overlay \
 sudo modprobe br_netfilter
 
 # Configuração dos parâmetros do sysctl
