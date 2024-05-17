@@ -526,19 +526,20 @@ kubectl get nodes
   Mais informações sobre o Kind estão disponíveis em: https://kind.sigs.k8s.io
 
 
-#INSTALAÇÃO CLUSTER CRI-O: " Pode ser usado em produção"
+# INSTALAÇÃO CLUSTER CRI-O: " Pode ser usado em produção"
 
-**Instalação dos módulos do kernel**
+# Instalação dos módulos do kernel
 
 cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
 EOF
 
+# Aplicando os modulos
 sudo modprobe overlay
 sudo modprobe br_netfilter
 
-**Configuração dos parâmetros do sysctl**
+# Configuração dos parâmetros do sysctl
 Configuração dos parâmetros do sysctl, fica mantido mesmo com reebot da máquina.
 
 cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
@@ -550,8 +551,7 @@ EOF
 Aplica as definições do sysctl sem reiniciar a máquina
 sudo sysctl --system
 
-**Agora sim, podemos instalar e configurar o CRI-O**
-#Instalação
+# Agora sim, podemos instalar e configurar o CRI-O
 
 Adicionando o repositório e Instalando CRI-O
 
@@ -577,6 +577,7 @@ curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:sta
 curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | apt-key add -
 
 # atualiza a lista de pacotes e instala o cri-o
+
 apt-get update
 apt-get install cri-o cri-o-runc
 
@@ -584,36 +585,38 @@ apt-get install cri-o cri-o-runc
 
 Agora que eu tenho o container runtime instalado em todas as máquinas, chegou a hora de instalar o kubeadm, o kubelet e o kubectl. Então vamos seguir as etapas e executar esses passos em TODAS AS MÁQUINAS.
 
-Atualizo os pacotes necessários pra instalação 
+# Atualizo os pacotes necessários pra instalação 
+
 sudo apt-get update && \
 sudo apt-get install -y apt-transport-https ca-certificates curl
 
-Download da chave pública
+# Download da chave pública
+
 If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gp
 
-Adiciono o repositório apt do Kubernetes
+# Adiciono o repositório apt do Kubernetes
 
 This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
 
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-tualização do repositório apt e instalação das ferramentas
+# Atualização do repositório apt e instalação das ferramentas
 
 sudo apt-get update && \
 sudo apt-get install -y kubelet kubeadm kubectl 
 
-Agora eu garanto que eles não sejam atualizados automaticamente. 
+# Agora eu garanto que eles não sejam atualizados automaticamente. 
 
 sudo apt-mark hold kubelet kubeadm kubectl 
 
-Iniciando o cluster Kubernetes:
+# Iniciando o cluster Kubernetes:
 
 Agora que todos os elementos estão instalados, tá na hora de iniciar o cluster Kubernetes, então eu vou executar o comando de inicialização do cluster. Esse comando, você vai executar APENAS NA MÁQUINA QUE VAI SER O CONTROL PLANE !!!
 
-Comando de inicialização
+# Comando de inicialização
 
 kubeadm init
 
@@ -625,7 +628,7 @@ Você também pode incluir alguns parâmetros:
 
 **--pod-network-cidr** ⇒
 
-Configurando o kubectl
+# Configurando o kubectl
 
 mkdir -p $HOME/.kube
 
@@ -635,20 +638,19 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 **Agora que o próximo passo é incluir os worker nodes no cluster, pra isso no output de inicialização do cluster já aparece o comando kubeadm join pra executar nos worker nodes, mas se você perder ou precisar do comando de novo, é só executar no control plane o comando token create**
 
-Gerando o comando join e executando nos nodes
+# Gerando o comando join e executando nos nodes
 
 kubeadm token create --print-join-command
 
 kubeadm join 159.223.123.99:6443 --token 4qefmj.lj9hx9atef5a9xnj --discovery-token-ca-cert-hash sha256:7f72c6d435aba7d320661741df4c1d3b8830414057e0c13d0ba1fa84ef4e4306
 
-Agora, se você executar o kubectl get nodes, vai ver que o control plane e os nodes não estão prontos, pra resolver isso, é preciso instalar o Container Network Interface ou CNI, vc pode usar tbm o CALICO, aqui eu vou usar o Weave Net
+**Agora, se você executar o kubectl get nodes, vai ver que o control plane e os nodes não estão prontos, pra resolver isso, é preciso instalar o Container Network Interface ou CNI, vc pode usar tbm o CALICO, aqui eu vou usar o Weave Net**
 
-Instalação do CNI
+# Instalação do CNI
 
 kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
 
-IMPORTANTE: Se você estiver utilizando firewall, deve ser liberada as portas TCP 6783 e UDP 6783/6784 para o Weave Net
-
+**IMPORTANTE: Se você estiver utilizando firewall, deve ser liberada as portas TCP 6783 e UDP 6783/6784 para o Weave Net**
 
 
 Primeiros passos no k8s
