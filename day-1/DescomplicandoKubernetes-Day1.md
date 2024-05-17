@@ -122,6 +122,7 @@ Abaixo um diagrama que mostra a arquitetura do k8s:
 | *Arquitetura Kubernetes* |
 
 
+
 API Server: É um dos principais componentes do k8s. Este componente fornece uma API que utiliza JSON sobre HTTP para comunicação, onde para isto é utilizado principalmente o utilitário kubectl, por parte dos administradores, para a comunicação com os demais nós, como mostrado no gráfico. Estas comunicações entre componentes são estabelecidas através de requisições REST;
 
 etcd: O etcd é um datastore chave-valor distribuído que o k8s utiliza para armazenar as especificações, status e configurações do cluster. Todos os dados armazenados dentro do etcd são manipulados apenas através da API. Por questões de segurança, o etcd é por padrão executado apenas em nós classificados como control plane no cluster k8s, mas também podem ser executados em clusters externos, específicos para o etcd, por exemplo;
@@ -137,16 +138,18 @@ Kube-proxy: Age como um proxy e um load balancer. Este componente é responsáve
 Portas que devemos nos preocupar
 CONTROL PLANE
 
-Protocol	Direction	Port Range	Purpose	Used By
-TCP	Inbound	6443*	Kubernetes API server	All
-TCP	Inbound	2379-2380	etcd server client API	kube-apiserver, etcd
-TCP	Inbound	10250	Kubelet API	Self, Control plane
-TCP	Inbound	10251	kube-scheduler	Self
-TCP	Inbound	10252	kube-controller-manager	Self
-Toda porta marcada por * é customizável, você precisa se certificar que a porta alterada também esteja aberta.   WORKERS
-Protocol	Direction	Port Range	Purpose	Used By
-TCP	Inbound	10250	Kubelet API	Self, Control plane
-TCP	Inbound	30000-32767	NodePort	Services All
+Protocol	  Direction	  Port Range	    Purpose	Used By
+TCP	        Inbound	    6443*	          Kubernetes API server	All
+TCP	        Inbound	    2379-2380	      etcd server client API	kube-apiserver, etcd
+TCP	        Inbound	    10250	          Kubelet API	Self, Control plane
+TCP	        Inbound	    10251	          kube-scheduler	Self
+TCP	        Inbound	    10252	          kube-controller-manager	Self
+Toda porta marcada por * é customizável, você precisa se certificar que a porta alterada também esteja aberta.   
+
+WORKERS
+Protocol	Direction	    Port Range	    Purpose	Used By
+TCP	        Inbound	    10250	          Kubelet API	Self, Control plane
+TCP	        Inbound	    30000-32767	    NodePort	Services All
  
 
 Conceitos-chave do k8s
@@ -521,6 +524,114 @@ Have a question, bug, or feature request? Let us know! https://kind.sigs.k8s.io/
 
 kubectl get nodes
   Mais informações sobre o Kind estão disponíveis em: https://kind.sigs.k8s.io
+
+
+INSTALAÇÃO CLUSTER CRI-O: " Pode ser usado em produção"
+
+**Instalação dos módulos do kernel**
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+**Configuração dos parâmetros do sysctl**
+# Configuração dos parâmetros do sysctl, fica mantido mesmo com reebot da máquina.
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+
+# Aplica as definições do sysctl sem reiniciar a máquina
+sudo sysctl --system
+
+**Agora sim, podemos instalar e configurar o CRI-O**
+Instalação
+Adicionando o repositório e Instalando CRI-O
+# Instalação de pré requisitos
+
+sudo apt update && \
+sudo apt install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release -y
+
+OBS: Note que devemos substituir as variáveis $OS e $VERSION por Debian_11 e 1.22 respectivamente. Isso pode ser feito de duas formas, a primeira exportando as variáveis com as diretivas export OS='Debian_11'; export VERSION='1.24'
+
+# adiciona repositório nas listas de pacotes
+echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+
+echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+
+# adiciona as chaves dos repositórios
+curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | apt-key add -
+
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | apt-key add -
+
+# atualiza a lista de pacotes e instala o cri-o
+apt-get update
+apt-get install cri-o cri-o-runc
+
+### Instalação do kubeadm, kubelet and kubectl
+
+Agora que eu tenho o container runtime instalado em todas as máquinas, chegou a hora de instalar o kubeadm, o kubelet e o kubectl. Então vamos seguir as etapas e executar esses passos em TODAS AS MÁQUINAS.
+
+Atualizo os pacotes necessários pra instalação 
+sudo apt-get update && \
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+Download da chave pública
+# If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
+# sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gp
+
+Adiciono o repositório apt do Kubernetes
+# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+tualização do repositório apt e instalação das ferramentas
+sudo apt-get update && \
+sudo apt-get install -y kubelet kubeadm kubectl 
+
+Agora eu garanto que eles não sejam atualizados automaticamente. 
+sudo apt-mark hold kubelet kubeadm kubectl 
+
+Iniciando o cluster Kubernetes
+Agora que todos os elementos estão instalados, tá na hora de iniciar o cluster Kubernetes, então eu vou executar o comando de inicialização do cluster. Esse comando, você vai executar APENAS NA MÁQUINA QUE VAI SER O CONTROL PLANE !!!
+
+Comando de inicialização
+kubeadm init
+
+Você também pode incluir alguns parâmetros:
+
+**--apiserver-cert-extra-sans** ⇒ Inclui o IP ou domínio como acesso válido no certificado do kube-api. Se você tem mais de 1 adaptador de rede no cluster (um interno e um externo por exemplo) é importante que você utilize.
+**--apiserver-advertise-address** ⇒ Define o adaptador de rede que vai ser responsável por se comunicar com o cluster.
+**--pod-network-cidr** ⇒
+
+Configurando o kubectl
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+**Agora que o próximo passo é incluir os worker nodes no cluster, pra isso no output de inicialização do cluster já aparece o comando kubeadm join pra executar nos worker nodes, mas se você perder ou precisar do comando de novo, é só executar no control plane o comando token create**
+
+Gerando o comando join e executando nos nodes
+kubeadm token create --print-join-command
+
+kubeadm join 159.223.123.99:6443 --token 4qefmj.lj9hx9atef5a9xnj --discovery-token-ca-cert-hash sha256:7f72c6d435aba7d320661741df4c1d3b8830414057e0c13d0ba1fa84ef4e4306
+
+Agora, se você executar o kubectl get nodes, vai ver que o control plane e os nodes não estão prontos, pra resolver isso, é preciso instalar o Container Network Interface ou CNI, vc pode usar tbm o CALICO, aqui eu vou usar o Weave Net
+
+Instalação do CNI
+kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+IMPORTANTE: Se você estiver utilizando firewall, deve ser liberada as portas TCP 6783 e UDP 6783/6784 para o Weave Net
+
+
 
  
 
