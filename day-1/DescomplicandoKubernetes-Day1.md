@@ -530,6 +530,9 @@ kubectl get nodes
 
 # Instalação dos módulos do kernel
 
+sudo apt update && \
+sudo apt install \
+
 cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
