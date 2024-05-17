@@ -533,22 +533,22 @@ kubectl get nodes
 cat <<EOF | sudo tee /etc/modules-load.d/cri-o.conf \
 overlay \
 br_netfilter \
-EOF \
+EOF
 
 # Aplicando os modulos
-sudo modprobe overlay
+sudo modprobe overlay /
 sudo modprobe br_netfilter
 
 # Configuração dos parâmetros do sysctl
 Configuração dos parâmetros do sysctl, fica mantido mesmo com reebot da máquina.
 
-cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.ipv4.ip_forward                 = 1
-net.bridge.bridge-nf-call-ip6tables = 1
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf \
+net.bridge.bridge-nf-call-iptables  = 1 \
+net.ipv4.ip_forward                 = 1 \
+net.bridge.bridge-nf-call-ip6tables = 1 \
 EOF
 
-Aplica as definições do sysctl sem reiniciar a máquina
+Aplica as definições do sysctl sem reiniciar a máquina \
 sudo sysctl --system
 
 # Agora sim, podemos instalar e configurar o CRI-O
@@ -557,11 +557,11 @@ Adicionando o repositório e Instalando CRI-O
 
 # Instalação de pré requisitos
 
-sudo apt update && \
-sudo apt install \
-    ca-certificates \
-    curl \
-    gnupg \
+sudo apt update && \ \
+sudo apt install \ \
+    ca-certificates \ \
+    curl \ \
+    gnupg \ \
     lsb-release -y
 
 OBS: Note que devemos substituir as variáveis $OS e $VERSION por Debian_11 e 1.22 respectivamente. Isso pode ser feito de duas formas, a primeira exportando as variáveis com as diretivas export OS='Debian_11'; export VERSION='1.24'
@@ -578,7 +578,7 @@ curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/
 
 # atualiza a lista de pacotes e instala o cri-o
 
-apt-get update
+apt-get update \
 apt-get install cri-o cri-o-runc
 
 # Instalação do kubeadm, kubelet and kubectl
@@ -587,12 +587,12 @@ Agora que eu tenho o container runtime instalado em todas as máquinas, chegou a
 
 # Atualizo os pacotes necessários pra instalação 
 
-sudo apt-get update && \
+sudo apt-get update && \ \
 sudo apt-get install -y apt-transport-https ca-certificates curl
 
 # Download da chave pública
 
-If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
+If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below. \
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gp
@@ -605,7 +605,7 @@ echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.
 
 # Atualização do repositório apt e instalação das ferramentas
 
-sudo apt-get update && \
+sudo apt-get update && \ \
 sudo apt-get install -y kubelet kubeadm kubectl 
 
 # Agora eu garanto que eles não sejam atualizados automaticamente. 
