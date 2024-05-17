@@ -530,10 +530,10 @@ kubectl get nodes
 
 # Instalação dos módulos do kernel
 
-cat <<EOF | sudo tee /etc/modules-load.d/cri-o.conf
-overlay
-br_netfilter
-EOF
+cat <<EOF | sudo tee /etc/modules-load.d/cri-o.conf \
+overlay \
+br_netfilter \
+EOF \
 
 # Aplicando os modulos
 sudo modprobe overlay
