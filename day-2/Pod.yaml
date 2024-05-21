@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: girus
+    service: webserver
+  name: girus
+spec:
+  containers:
+  - image: nginx
+    name: girus
+    resources: {}
+  -image: ubuntu
+   name: ubuntu
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
