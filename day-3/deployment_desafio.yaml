@@ -11,10 +11,7 @@ spec:
     matchLabels:
       app: nginx-girus
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 2
+    type: Recreate   
   template:
     metadata:
       labels:
