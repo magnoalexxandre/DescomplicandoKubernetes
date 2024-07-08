@@ -29,3 +29,11 @@ spec:
           requests:
             cpu: 0.25
             memory: 128Mi
+        startupProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 2
+          timeoutSeconds: 5
