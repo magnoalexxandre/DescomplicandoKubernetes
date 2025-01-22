@@ -575,17 +575,13 @@ sudo apt install \ \
     gnupg \ \
     lsb-release -y
 
-OBS: Note que devemos substituir as variáveis $OS e $VERSION por Debian_11 e 1.22 respectivamente. Isso pode ser feito de duas formas, a primeira exportando as variáveis com as diretivas export OS='Debian_11'; export VERSION='1.24'
+OBS: Note que devemos substituir as variáveis $OS e $VERSION por Debian_11 e 1.22 respectivamente. Isso pode ser feito de duas formas, a primeira exportando as variáveis com as diretivas export KUBERNETES_VERSION='v1.30'; export CRIO_VERSION='v1.30'
 
-# adiciona repositório nas listas de pacotes
-echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+# adiciona repositório nas listas de pacotes | adiciona as chaves
 
-echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |     gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |     tee /etc/apt/sources.list.d/cri-o.list
 
-# adiciona as chaves dos repositórios
-curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | apt-key add -
-
-curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | apt-key add -
 
 # atualiza a lista de pacotes e instala o cri-o
 
@@ -606,13 +602,8 @@ sudo apt-get install -y apt-transport-https ca-certificates curl
 If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below. \
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gp
-
-# Adiciono o repositório apt do Kubernetes
-
-This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
-
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |     gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" |     tee /etc/apt/sources.list.d/kubernetes.list
 
 # Atualização do repositório apt e instalação das ferramentas
 
