@@ -577,9 +577,9 @@ sudo apt install \ \
 
 OBS: Note que devemos substituir as variáveis $OS e $VERSION por Debian_11 e 1.22 respectivamente. Isso pode ser feito de duas formas, a primeira exportando as variáveis com as diretivas export KUBERNETES_VERSION='v1.30'; export CRIO_VERSION='v1.30'
 
-# adiciona repositório nas listas de pacotes | adiciona as chaves
+# adiciona repositório nas listas de pacotes e adiciona as chaves
 
-curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |     gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |     gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg \
 echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |     tee /etc/apt/sources.list.d/cri-o.list
 
 
@@ -602,7 +602,7 @@ sudo apt-get install -y apt-transport-https ca-certificates curl
 If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below. \
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |     gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |     gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" |     tee /etc/apt/sources.list.d/kubernetes.list
 
 # Atualização do repositório apt e instalação das ferramentas
